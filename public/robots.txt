@@ -1,0 +1,6 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow:
+
+Sitemap: https://www.oneedinstitute.ca/sitemap.xml
+Host: https://www.oneedinstitute.ca

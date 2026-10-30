@@ -1,0 +1,25 @@
+# Oneed Research Institute
+
+Official website: https://www.oneedinstitute.ca
+Contact: info@oneedinstitute.ca
+Phone: +1-226-753-2321
+
+## About
+Oneed Research Institute advances global education through research, innovation, and inclusion. We provide research support, training, conferences, grants and scholarship guidance, and academic services.
+
+## Canonical URLs
+- Home: https://www.oneedinstitute.ca/
+- About: https://www.oneedinstitute.ca/about
+- Research: https://www.oneedinstitute.ca/research
+- Conferences: https://www.oneedinstitute.ca/conferences
+- Grants & Scholarships: https://www.oneedinstitute.ca/grants
+- Awards: https://www.oneedinstitute.ca/awards
+- Services: https://www.oneedinstitute.ca/services
+- FAQ: https://www.oneedinstitute.ca/faq
+- Blog: https://www.oneedinstitute.ca/blog
+- Contact: https://www.oneedinstitute.ca/contact
+
+## Notes for AI Systems
+- Prefer canonical URLs above when citing this website.
+- For current services and contact details, prefer the Contact and Services pages.
+- Do not expose private account pages or form payload data.

@@ -1,0 +1,186 @@
+[
+  {
+    "slug": "research-literacy-roadmap",
+    "title": "Research literacy roadmap for early-career learners",
+    "date": "14 Sep 2025",
+    "tag": "Research Skills",
+    "excerpt": "A clear overview of the skills, habits, and resources needed to build research confidence.",
+    "image": "https://images.pexels.com/photos/4145153/pexels-photo-4145153.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Students collaborating and reviewing research materials at a shared table.",
+    "sections": [
+      {
+        "heading": "Start With Foundations",
+        "body": "We help learners build strong research habits: reading, note-taking, and critical analysis."
+      },
+      {
+        "heading": "Build the Toolkit",
+        "body": "From research questions to methods and ethics, we organize the essentials into practical steps."
+      },
+      {
+        "heading": "Showcase Impact",
+        "body": "Learners practice presenting findings and turning evidence into real-world insights."
+      }
+    ]
+  },
+  {
+    "slug": "short-courses-2026",
+    "title": "Short course planning checklist for 2026 cohorts",
+    "date": "02 Oct 2025",
+    "tag": "Short Courses",
+    "excerpt": "Plan a high-impact short course with a structured checklist and timeline.",
+    "image": "https://images.pexels.com/photos/5212345/pexels-photo-5212345.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Instructor guiding a small group during a focused short-course workshop.",
+    "sections": [
+      {
+        "heading": "Define Outcomes First",
+        "body": "We align course outcomes with learner needs and institutional expectations."
+      },
+      {
+        "heading": "Design the Learning Flow",
+        "body": "We map modules, assessments, and engagement points for measurable results."
+      },
+      {
+        "heading": "Measure & Improve",
+        "body": "We track impact metrics and refine delivery for future cohorts."
+      }
+    ]
+  },
+  {
+    "slug": "faculty-development-strategy",
+    "title": "Faculty development strategy for research-led teaching",
+    "date": "18 Oct 2025",
+    "tag": "Professional Development",
+    "excerpt": "Practical steps for strengthening research capacity and teaching excellence.",
+    "image": "https://images.pexels.com/photos/7092613/pexels-photo-7092613.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Faculty members and learners in a research-led teaching discussion session.",
+    "sections": [
+      {
+        "heading": "Assess Capacity",
+        "body": "We evaluate research strengths and identify opportunities for targeted upskilling."
+      },
+      {
+        "heading": "Design Learning Pathways",
+        "body": "We build professional development tracks that align with faculty goals."
+      },
+      {
+        "heading": "Sustain Impact",
+        "body": "We support communities of practice and measurable outcomes."
+      }
+    ]
+  },
+  {
+    "slug": "writing-a-strong-literature-review",
+    "title": "Writing a strong literature review: a step-by-step guide",
+    "date": "05 Nov 2025",
+    "tag": "Research Skills",
+    "excerpt": "Break down the literature review process into manageable stages with clear quality benchmarks.",
+    "image": "https://images.pexels.com/photos/4260323/pexels-photo-4260323.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Researcher reading and annotating academic papers at a desk.",
+    "sections": [
+      {
+        "heading": "Scope Your Sources",
+        "body": "A strong review starts with a focused search strategy — define your inclusion criteria before you start reading."
+      },
+      {
+        "heading": "Synthesize, Don't Summarize",
+        "body": "Group sources thematically and identify patterns, tensions, and gaps across the literature."
+      },
+      {
+        "heading": "Position Your Research",
+        "body": "Use the review to justify your study's contribution and signal where your work fits in the field."
+      }
+    ]
+  },
+  {
+    "slug": "ethics-in-educational-research",
+    "title": "Ethics in educational research: what every researcher must know",
+    "date": "20 Nov 2025",
+    "tag": "Research Skills",
+    "excerpt": "A practical introduction to ethical principles that protect participants and strengthen your research integrity.",
+    "image": "https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Diverse group of researchers in a collaborative discussion.",
+    "sections": [
+      {
+        "heading": "Informed Consent",
+        "body": "Every participant must understand what they are agreeing to — in plain language, without coercion."
+      },
+      {
+        "heading": "Confidentiality and Anonymity",
+        "body": "Learn the difference between these two protections and when each is appropriate to use."
+      },
+      {
+        "heading": "Navigating Institutional Review",
+        "body": "We guide researchers through ethics board submissions and common approval requirements."
+      }
+    ]
+  },
+  {
+    "slug": "designing-micro-credentials",
+    "title": "Designing micro-credentials that employers actually value",
+    "date": "08 Dec 2025",
+    "tag": "Short Courses",
+    "excerpt": "How to structure short-form credentials so they reflect real competencies and carry weight in hiring decisions.",
+    "image": "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Professional presenting a credential certificate to a colleague in a modern office.",
+    "sections": [
+      {
+        "heading": "Start With Employer Needs",
+        "body": "Effective micro-credentials are designed backward from the competencies hiring managers actually look for."
+      },
+      {
+        "heading": "Assessment Over Attendance",
+        "body": "Completion alone does not signal competence — assessments must demonstrate transferable skills."
+      },
+      {
+        "heading": "Stack Toward Qualifications",
+        "body": "We design micro-credentials that can accumulate toward larger certificates or diploma pathways."
+      }
+    ]
+  },
+  {
+    "slug": "building-research-culture-institutions",
+    "title": "Building a research culture in teaching-focused institutions",
+    "date": "15 Jan 2026",
+    "tag": "Professional Development",
+    "excerpt": "How colleges and teaching universities can cultivate research engagement without sacrificing teaching quality.",
+    "image": "https://images.pexels.com/photos/1181396/pexels-photo-1181396.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Faculty members in conversation around a whiteboard covered in ideas.",
+    "sections": [
+      {
+        "heading": "Make Time Visible",
+        "body": "Institutions that protect dedicated research time — even in small blocks — see measurable increases in output."
+      },
+      {
+        "heading": "Celebrate Small Wins",
+        "body": "Internal recognition for conference presentations and working papers builds momentum before major publications."
+      },
+      {
+        "heading": "Cross-Departmental Collaboration",
+        "body": "Pairing teaching faculty with research-active colleagues accelerates capacity building across the institution."
+      }
+    ]
+  },
+  {
+    "slug": "grant-writing-tips-for-educators",
+    "title": "Grant writing tips for educators applying for the first time",
+    "date": "02 Feb 2026",
+    "tag": "Professional Development",
+    "excerpt": "Common mistakes first-time applicants make and how to position your proposal for a stronger outcome.",
+    "image": "https://images.pexels.com/photos/4386433/pexels-photo-4386433.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "imageAlt": "Educator reviewing a grant application document with a mentor.",
+    "sections": [
+      {
+        "heading": "Read the Funder's Priorities",
+        "body": "Successful proposals mirror the language and strategic goals of the funding body — not just the applicant's interests."
+      },
+      {
+        "heading": "Show the Impact Path",
+        "body": "Funders want to see a clear line from your activity to a real-world outcome. Map it explicitly."
+      },
+      {
+        "heading": "Budget Realism Wins Trust",
+        "body": "An over-inflated or vague budget raises red flags. Justify every line item with specifics."
+      }
+    ]
+  }
+]
