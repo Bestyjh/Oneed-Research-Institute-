@@ -26,3 +26,6 @@ yarn-error.log*
 .env*.local
 
 .vercel-env-temp/
+
+# Cloudflare local development files
+.wrangler/

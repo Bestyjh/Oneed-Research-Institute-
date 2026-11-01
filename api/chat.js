@@ -56,11 +56,36 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+
   const ip = getIp(req);
-  const { allowed } = rateLimit(`chat:${ip}`, 20, 60 * 60 * 1000); // 20 per hour
-  if (!allowed) {
-    return res.status(429).json({ error: 'Too many messages. Please try again later.' });
+
+  try {
+    const { allowed, remaining, resetInMs } = await rateLimit(
+      `chat:${ip}`,
+      20,
+      60 * 60 * 1000
+    );
+
+    res.setHeader('X-RateLimit-Remaining', String(remaining));
+
+    if (!allowed) {
+      res.setHeader(
+        'Retry-After',
+        String(Math.max(1, Math.ceil(resetInMs / 1000)))
+      );
+
+      return res.status(429).json({
+        error: 'Too many messages. Please try again later.'
+      });
+    }
+  } catch (error) {
+    console.error('Chat rate-limit failure:', error.message);
+
+    return res.status(503).json({
+      error: 'The service is temporarily unavailable. Please try again later.'
+    });
   }
+
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
