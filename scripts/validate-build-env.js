@@ -29,6 +29,12 @@ const validKey =
   key.length > "sb_publishable_".length;
 
 if (!validUrl || !validKey) {
+  console.error("Supabase build diagnostics:", {
+    urlPresent: Boolean(url),
+    urlValid: validUrl,
+    keyPresent: Boolean(key),
+    keyFormatValid: validKey,
+  });
   console.error(
     "Build failed: Invalid Supabase frontend configuration."
   );
