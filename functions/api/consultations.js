@@ -138,10 +138,14 @@ export async function onRequestPost({ request, env }) {
 
       totalBytes += value.byteLength;
 
-      if (totalBytes > MAX_BODY_BYTES) {
-        reader.cancel().catch(() => {});
-        return json({ error: 'Request body is too large' }, 413);
-      }
+
+if (totalBytes > MAX_BODY_BYTES) {
+  await reader.cancel().catch(() => {});
+
+  return json({
+    error: 'Request body is too large'
+  }, 413);
+}
 
       chunks.push(value);
     }
@@ -175,10 +179,11 @@ export async function onRequestPost({ request, env }) {
 
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   const email = typeof body.email === 'string' ? body.email.trim() : '';
-  const service =
-    typeof body.service === 'string'
-      ? body.service.trim() || 'consultation'
-      : 'consultation';
+const service =
+  typeof body.service === 'string'
+    ? body.service.trim()
+    : 'consultation';
+
   const pageUrl =
     typeof body.page_url === 'string' ? body.page_url.trim() : '';
 
@@ -186,14 +191,17 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'Name and email are required' }, 400);
   }
 
-  if (
-    name.length > 150 ||
-    email.length > 254 ||
-    service.length > 200 ||
-    pageUrl.length > 2048
-  ) {
-    return json({ error: 'One or more fields are too long' }, 400);
-  }
+
+if (
+  [...name].length > 150 ||
+  [...email].length > 254 ||
+  [...service].length > 150 ||
+  [...pageUrl].length > 2048
+) {
+  return json({
+    error: 'One or more fields are too long'
+  }, 400);
+}
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: 'A valid email address is required' }, 400);

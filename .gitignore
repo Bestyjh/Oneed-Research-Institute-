@@ -29,3 +29,9 @@ yarn-error.log*
 
 # Cloudflare local development files
 .wrangler/
+.env.production
+# Cloudflare local secrets
+.dev.vars*
+
+# Supabase CLI temporary files
+supabase/.temp/

@@ -2,8 +2,8 @@ import { rateLimit, getClientIp } from '../_lib/ratelimit.js';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
 const DEFAULT_MODEL = 'gpt-4o-mini';
-const MAX_BODY_BYTES = 16384;
-const MAX_MESSAGE_LENGTH = 2000;
+const MAX_BODY_BYTES = 50 * 1024;
+const MAX_MESSAGE_LENGTH = 4000;
 const MAX_MESSAGES = 12;
 
 function json(data, status = 200, headers = {}) {
@@ -128,14 +128,22 @@ function buildFallbackReply(userText) {
   return 'I can help with Oneed services, training, conferences, and partnerships. You can also contact info@oneedinstitute.ca for official information.';
 }
 
-export async function onRequestPost({ request, env }) {
-  const ip = getClientIp(request);
 
-  if (!ip) {
-    return json({ error: 'Unable to verify request origin' }, 503);
+export async function onRequestPost({ request, env }) {
+  let ip;
+
+  try {
+    ip = getClientIp(request);
+  } catch (error) {
+    console.error('Chat client IP validation failed:', error.message);
+
+    return json({
+      error: 'Unable to verify request origin'
+    }, 503);
   }
 
   let limit;
+
 
   try {
     limit = await rateLimit(
@@ -181,7 +189,15 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'Messages must be an array' }, 400);
   }
 
-  const messages = incomingMessages.slice(-MAX_MESSAGES);
+
+if (incomingMessages.length > MAX_MESSAGES) {
+  return json({
+    error: 'Too many messages. Maximum is 12.'
+  }, 400);
+}
+
+const messages = incomingMessages;
+
 
   if (
     messages.length === 0 ||
@@ -191,7 +207,7 @@ export async function onRequestPost({ request, env }) {
       (message.role !== 'user' && message.role !== 'assistant') ||
       typeof message.content !== 'string' ||
       !message.content.trim() ||
-      message.content.length > MAX_MESSAGE_LENGTH
+  [...message.content].length > MAX_MESSAGE_LENGTH
     )
   ) {
     return json({ error: 'Invalid chat messages' }, 400);
@@ -245,7 +261,7 @@ export async function onRequestPost({ request, env }) {
         ],
         max_output_tokens: 280
       }),
-      signal: AbortSignal.timeout(12000)
+     signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {

@@ -22,6 +22,7 @@ async function sendConsultationEmail({ name, email, service, pageUrl }) {
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
+    signal: AbortSignal.timeout(10000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
@@ -80,20 +81,77 @@ module.exports = async function handler(req, res) {
   }
 
 
-  const { client: supabaseAdmin, error: initError } = getSupabaseAdmin();
-  if (initError) {
-    return res.status(500).json({ error: initError });
-  }
 
-  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
+const { client: supabaseAdmin, error: initError } = getSupabaseAdmin();
+
+if (initError) {
+  console.error('Consultation API initialization failed:', initError);
+
+  return res.status(500).json({
+    error: 'Internal server error'
+  });
+}
+
+
+let body;
+
+try {
+  body =
+    typeof req.body === 'string'
+      ? JSON.parse(req.body || '{}')
+      : req.body ?? {};
+
+  if (
+    typeof body !== 'object' ||
+    body === null ||
+    Array.isArray(body)
+  ) {
+    return res.status(400).json({
+      error: 'Request body must be a JSON object'
+    });
+  }
+} catch {
+  return res.status(400).json({
+    error: 'Invalid JSON request body'
+  });
+}
+
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   const email = typeof body.email === 'string' ? body.email.trim() : '';
   const service = typeof body.service === 'string' ? body.service.trim() : 'consultation';
   const pageUrl = typeof body.page_url === 'string' ? body.page_url.trim() : '';
 
+
+const fieldLimits = {
+  name: 150,
+  email: 254,
+  service: 150,
+  pageUrl: 2048
+};
+
+const submittedFields = { name, email, service, pageUrl };
+
+for (const [field, maxLength] of Object.entries(fieldLimits)) {
+  if ([...submittedFields[field]].length > maxLength) {
+    return res.status(400).json({
+      error: `${field} must not exceed ${maxLength} characters`
+    });
+  }
+}
+
   if (!name || !email) {
     return res.status(400).json({ error: 'Name and email are required' });
   }
+
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!emailPattern.test(email)) {
+  return res.status(400).json({
+    error: 'Invalid email address'
+  });
+}
+
 
   const { error } = await supabaseAdmin.from('consultation_requests').insert({
     name,
@@ -106,10 +164,34 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to submit consultation request' });
   }
 
-  const emailResult = await sendConsultationEmail({ name, email, service, pageUrl });
-  if (!emailResult.ok) {
-    console.error('Consultation notification email failed:', emailResult.reason);
-  }
 
-  return res.status(201).json({ ok: true, email_notified: emailResult.ok });
+let emailNotified = false;
+
+try {
+  const emailResult = await sendConsultationEmail({
+    name,
+    email,
+    service,
+    pageUrl
+  });
+
+  emailNotified = emailResult.ok;
+
+  if (!emailResult.ok) {
+    console.error(
+      'Consultation notification email failed:',
+      emailResult.reason
+    );
+  }
+} catch (error) {
+  console.error(
+    'Consultation notification email encountered an unexpected error:',
+    error
+  );
+}
+
+return res.status(201).json({
+  ok: true,
+  email_notified: emailNotified
+});
 };

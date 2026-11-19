@@ -300,17 +300,27 @@ function SeoManager() {
 
   return null;
 }
-
-export default function App() {
+function OneTimeAuthCallback({ initialAuthCallback }) {
+  return (
+    <AuthCallbackPage initialAuthCallback={initialAuthCallback} />
+  );
+}
+export default function App({ initialAuthCallback = null }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
+  const location = useLocation();
+
+  const [callbackEvidence, setCallbackEvidence] = useState(
+    () => initialAuthCallback
+  );
 
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.userAgent === 'ReactSnap') {
-      setAuthReady(true);
-      return undefined;
+    if (location.pathname !== '/auth/callback') {
+      setCallbackEvidence(null);
     }
+  }, [location.pathname]);
 
+   useEffect(() => {
     let mounted = true;
 
     const bootstrapSession = async () => {
@@ -349,7 +359,7 @@ export default function App() {
       email: email.trim().toLowerCase(),
       password,
       options: {
-        emailRedirectTo: `${SITE_URL}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           name: name.trim()
         }
@@ -414,7 +424,12 @@ export default function App() {
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route
+  path="/auth/callback"
+  element={
+    <OneTimeAuthCallback initialAuthCallback={callbackEvidence} />
+  }
+/>
           <Route path="/login" element={currentUser ? <Navigate to="/account" replace /> : <LoginPage onLogin={handleLogin} />} />
           <Route path="/signup" element={currentUser ? <Navigate to="/account" replace /> : <SignupPage onSignup={handleSignup} />} />
           <Route path="/account" element={currentUser ? <AccountPage currentUser={currentUser} onLogout={handleLogout} /> : <Navigate to="/login" replace />} />
@@ -817,6 +832,7 @@ const ChatInput = memo(function ChatInput({ onSend, isLoading }) {
         <input
           ref={inputRef}
           type="text"
+          maxLength={4000}
           placeholder="Ask about Oneed services..."
           className="w-full rounded-full border border-[var(--ink)]/20 px-4 py-2 text-sm focus:border-[var(--accent-2)] focus:outline-none"
           disabled={isLoading}
@@ -915,7 +931,7 @@ const ChatWidget = memo(function ChatWidget() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ messages: nextMessages.slice(-12) }),
         signal: controller.signal
       });
 

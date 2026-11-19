@@ -8,13 +8,7 @@ function getBearerToken(req) {
   return token;
 }
 
-async function getAuthedUser(req, res) {
-  const { client: supabaseAdmin, error: initError } = getSupabaseAdmin();
-  if (initError) {
-    res.status(500).json({ error: initError });
-    return null;
-  }
-
+async function getAuthedUser(req, res, supabaseAdmin) {
   const token = getBearerToken(req);
   if (!token) {
     res.status(401).json({ error: 'Missing bearer token' });
@@ -30,18 +24,28 @@ async function getAuthedUser(req, res) {
   return data.user;
 }
 
+
 module.exports = async function handler(req, res) {
-  if (!['GET', 'PUT'].includes(req.method)) {
+  try {
+    if (!['GET', 'PUT'].includes(req.method)) {
+
     res.setHeader('Allow', 'GET, PUT');
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { client: supabaseAdmin, error: initError } = getSupabaseAdmin();
-  if (initError) {
-    return res.status(500).json({ error: initError });
-  }
 
-  const user = await getAuthedUser(req, res);
+const { client: supabaseAdmin, error: initError } = getSupabaseAdmin();
+
+if (initError) {
+  console.error('Profile API initialization failed:', initError);
+
+  return res.status(500).json({
+    error: 'Internal server error'
+  });
+}
+
+
+  const user = await getAuthedUser(req, res, supabaseAdmin);
   if (!user) return;
 
   if (req.method === 'GET') {
@@ -80,15 +84,64 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ profile: created });
   }
 
-  const payload = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-  const updates = {
-    id: user.id,
-    email: user.email || '',
-    full_name: typeof payload.full_name === 'string' ? payload.full_name.trim() : '',
-    phone: typeof payload.phone === 'string' ? payload.phone.trim() : '',
-    organization: typeof payload.organization === 'string' ? payload.organization.trim() : '',
-    updated_at: new Date().toISOString()
-  };
+let payload;
+
+try {
+  payload =
+    typeof req.body === 'string'
+      ? JSON.parse(req.body || '{}')
+      : req.body ?? {};
+
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    Array.isArray(payload)
+  ) {
+    return res.status(400).json({
+      error: 'Request body must be a JSON object'
+    });
+  }
+} catch {
+  return res.status(400).json({
+    error: 'Invalid JSON request body'
+  });
+}
+
+const fieldLimits = {
+  full_name: 150,
+  phone: 30,
+  organization: 200
+};
+
+const validatedFields = {};
+
+for (const [field, maxLength] of Object.entries(fieldLimits)) {
+  const value = payload[field];
+
+  if (typeof value !== 'string') {
+    return res.status(400).json({
+      error: `${field} must be a string`
+    });
+  }
+
+  const trimmed = value.trim();
+
+  if ([...trimmed].length > maxLength) {
+    return res.status(400).json({
+      error: `${field} must not exceed ${maxLength} characters`
+    });
+  }
+
+  validatedFields[field] = trimmed;
+}
+
+const updates = {
+  id: user.id,
+  email: user.email || '',
+  ...validatedFields,
+  updated_at: new Date().toISOString()
+};
+
 
   const { data, error } = await supabaseAdmin
     .from('profiles')
@@ -100,5 +153,18 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to save profile' });
   }
 
+
   return res.status(200).json({ profile: data });
+
+  } catch (error) {
+    console.error('Unexpected Profile API error:', error);
+
+    if (res.headersSent) {
+      return;
+    }
+
+    return res.status(500).json({
+      error: 'Internal server error'
+    });
+  }
 };

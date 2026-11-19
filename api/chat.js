@@ -4,14 +4,14 @@ const OPENAI_API_URL = 'https://api.openai.com/v1/responses';
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
 function parseRequestBody(body) {
-  if (!body) return {};
-  if (typeof body === 'string') {
-    try {
-      return JSON.parse(body);
-    } catch (_) {
-      return {};
-    }
+  if (body == null || body === '') {
+    return {};
   }
+
+  if (typeof body === 'string') {
+    return JSON.parse(body);
+  }
+
   return body;
 }
 
@@ -87,13 +87,96 @@ module.exports = async function handler(req, res) {
   }
 
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
-  }
 
-  const body = parseRequestBody(req.body);
-  const incomingMessages = Array.isArray(body?.messages) ? body.messages : [];
+const MAX_REQUEST_BYTES = 50 * 1024;
+
+const declaredLength = Number(req.headers?.['content-length']);
+
+if (
+  Number.isFinite(declaredLength) &&
+  declaredLength > MAX_REQUEST_BYTES
+) {
+  return res.status(413).json({
+    error: 'Request body is too large. Maximum size is 50 KB.'
+  });
+}
+
+let requestBytes;
+
+try {
+  requestBytes = Buffer.byteLength(
+    typeof req.body === 'string'
+      ? req.body
+      : JSON.stringify(req.body ?? {})
+  );
+} catch (error) {
+  return res.status(400).json({
+    error: 'Invalid request body'
+  });
+}
+
+if (requestBytes > MAX_REQUEST_BYTES) {
+  return res.status(413).json({
+    error: 'Request body is too large. Maximum size is 50 KB.'
+  });
+}
+const apiKey = process.env.OPENAI_API_KEY;
+
+if (!apiKey) {
+  console.error('Chat API configuration error: OpenAI API key is missing');
+
+  return res.status(500).json({
+    error: 'The chat service is temporarily unavailable. Please try again later.'
+  });
+}
+
+
+
+let body;
+
+try {
+  body = parseRequestBody(req.body);
+} catch (error) {
+  return res.status(400).json({
+    error: 'Invalid JSON body'
+  });
+}
+
+
+if (!body || typeof body !== 'object' || Array.isArray(body)) {
+  return res.status(400).json({
+    error: 'Invalid request body'
+  });
+}
+
+if (!Array.isArray(body.messages)) {
+  return res.status(400).json({
+    error: 'Messages must be an array'
+  });
+}
+
+if (body.messages.length > 12) {
+  return res.status(400).json({
+    error: 'Too many messages. Maximum is 12.'
+  });
+}
+
+if (body.messages.some((message) =>
+  !message ||
+  typeof message !== 'object' ||
+  Array.isArray(message) ||
+  !['user', 'assistant'].includes(message.role) ||
+  typeof message.content !== 'string' ||
+  !message.content.trim() ||
+  [...message.content].length > 4000
+)) {
+  return res.status(400).json({
+    error: 'Each message must have a valid role and non-empty content of 4000 characters or fewer.'
+  });
+}
+
+const incomingMessages = body.messages;
+
   const latestUserMessage = [...incomingMessages].reverse().find((message) => message?.role === 'user');
   const fallbackReply = buildFallbackReply(latestUserMessage?.content);
 
@@ -125,6 +208,7 @@ module.exports = async function handler(req, res) {
   try {
     const openAIResponse = await fetch(OPENAI_API_URL, {
       method: 'POST',
+      signal: AbortSignal.timeout(10000),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json'

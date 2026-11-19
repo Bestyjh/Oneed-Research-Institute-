@@ -16,7 +16,7 @@ function getIp(req) {
   );
 }
 
-async function rateLimit(key, limit, windowMs) {
+async function rateLimit(key, limit, windowMs, env = process.env) {
   if (
     typeof key !== 'string' ||
     !key ||
@@ -30,13 +30,13 @@ async function rateLimit(key, limit, windowMs) {
     throw new Error('Invalid rate-limit parameters');
   }
 
-  const secret = process.env.RATE_LIMIT_HASH_SECRET;
+  const secret = env.RATE_LIMIT_HASH_SECRET;
 
   if (!secret || secret.length < 32) {
     throw new Error('RATE_LIMIT_HASH_SECRET is not configured');
   }
 
-  const { client, error: initError } = getSupabaseAdmin();
+  const { client, error: initError } = getSupabaseAdmin(env);
 
   if (initError || !client) {
     throw new Error('Rate-limit database is unavailable');

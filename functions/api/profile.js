@@ -199,6 +199,20 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPut({ request, env }) {
+  const declaredLength = request.headers.get('Content-Length');
+
+  if (declaredLength !== null) {
+    const length = Number(declaredLength);
+
+    if (!Number.isSafeInteger(length) || length < 0) {
+      return json({ error: 'Invalid Content-Length' }, 400);
+    }
+
+    if (length > 4096) {
+      return json({ error: 'Request body is too large' }, 413);
+    }
+  }
+
   const auth = await authenticate(request, env);
 
   if (auth.error) return auth.error;
@@ -212,61 +226,49 @@ export async function onRequestPut({ request, env }) {
   const { client, user } = auth;
   const body = parsed.body;
 
+
   const fields = ['full_name', 'phone', 'organization'];
 
-  for (const field of fields) {
-    if (
-      Object.prototype.hasOwnProperty.call(body, field) &&
-      typeof body[field] !== 'string'
-    ) {
-      return json(
-        { error: `Invalid ${field} field` },
-        400
-      );
-    }
-  }
-
   const maxLengths = {
-    full_name: 200,
-    phone: 50,
+    full_name: 150,
+    phone: 30,
     organization: 200
   };
 
   const updates = {
+    id: user.id,
     email: user.email || '',
     updated_at: new Date().toISOString()
   };
 
   for (const field of fields) {
-    if (Object.prototype.hasOwnProperty.call(body, field)) {
-      const value = body[field].trim();
-
-      if (value.length > maxLengths[field]) {
-        return json(
-          { error: 'One or more fields are too long' },
-          400
-        );
-      }
-
-      updates[field] = value;
+    if (typeof body[field] !== 'string') {
+      return json(
+        { error: `${field} must be a string` },
+        400
+      );
     }
+
+    const value = body[field].trim();
+
+    if ([...value].length > maxLengths[field]) {
+      return json(
+        { error: `${field} must not exceed ${maxLengths[field]} characters` },
+        400
+      );
+    }
+
+    updates[field] = value;
   }
 
-  if (!fields.some((field) =>
-    Object.prototype.hasOwnProperty.call(body, field)
-  )) {
-    return json(
-      { error: 'No profile fields provided' },
-      400
-    );
-  }
   try {
-    const { data, error } = await client
-      .from('profiles')
-      .update(updates)
-      .eq('id', user.id)
-      .select(PROFILE_COLUMNS)
-      .single();
+
+const { data, error } = await client
+  .from('profiles')
+  .upsert(updates, { onConflict: 'id' })
+  .select(PROFILE_COLUMNS)
+  .single();
+
 
     if (error) {
       console.error('Profile update failed:', error.message);
@@ -280,4 +282,16 @@ export async function onRequestPut({ request, env }) {
 
     return json({ error: 'Failed to save profile' }, 500);
   }
+}
+
+export async function onRequest({ request }) {
+  if (request.method === 'GET' || request.method === 'PUT') {
+    return json({ error: 'Method handler unavailable' }, 500);
+  }
+
+  return json(
+    { error: 'Method not allowed' },
+    405,
+    { Allow: 'GET, HEAD, PUT' }
+  );
 }

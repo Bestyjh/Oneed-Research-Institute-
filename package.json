@@ -5,11 +5,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^13.5.0",
     "autoprefixer": "^10.4.24",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
     "motion": "^12.35.0",
@@ -17,18 +13,18 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "7.18.5",
-    "react-scripts": "5.0.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^3.4.17",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "vite --host 127.0.0.1",
+    "build": "vite build",
     "postbuild": "node scripts/generate-prerendered-pages.js",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "prebuild": "node scripts/validate-build-env.js"
+    "test": "vitest run --config vitest.config.mjs",
+    "prebuild": "node scripts/validate-build-env.js",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:watch": "vitest --config vitest.config.mjs"
   },
   "eslintConfig": {
     "extends": [
@@ -49,6 +45,13 @@
     ]
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@vitejs/plugin-react": "^6.3.0",
+    "dotenv": "^18.0.10",
+    "jsdom": "^29.1.1",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
     "wrangler": "^4.156.0"
   },
   "jest": {

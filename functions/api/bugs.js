@@ -152,18 +152,21 @@ export async function onRequestPost({ request, env }) {
     );
   }
 
-  if (
-    title.length > 200 ||
-    description.length > 10000 ||
-    reporterEmail.length > 254 ||
-    pageUrl.length > 2048
-  ) {
-    return json({ error: 'One or more fields are too long' }, 400);
-  }
 
-  if (!['low', 'medium', 'high', 'critical'].includes(severity)) {
-    return json({ error: 'Invalid severity' }, 400);
-  }
+if (
+  [...title].length > 150 ||
+  [...description].length > 5000 ||
+  reporterEmail.length > 254 ||
+  [...pageUrl].length > 2048
+) {
+  return json({
+    error: 'One or more fields are too long'
+  }, 400);
+}
+
+if (!['low', 'medium', 'high'].includes(severity)) {
+  return json({ error: 'Invalid severity' }, 400);
+}
 
   if (
     reporterEmail &&
@@ -179,19 +182,57 @@ export async function onRequestPost({ request, env }) {
   }
 
   let userId = null;
-  const token = getOptionalBearerToken(request);
 
-  if (token) {
-    try {
-      const { data, error } = await client.auth.getUser(token);
+const authorizationHeader = request.headers.get('Authorization');
+const token = getOptionalBearerToken(request);
 
-      if (!error && data?.user?.id) {
-        userId = data.user.id;
+if (authorizationHeader !== null && !token) {
+  return json({
+    error: 'Invalid authentication token'
+  }, 401);
+}
+
+if (token) {
+
+  try {
+    const { data, error } = await client.auth.getUser(token);
+
+    if (error) {
+      if (error.status === 401 || error.status === 403) {
+        return json({
+          error: 'Invalid authentication token'
+        }, 401);
       }
-    } catch (error) {
-      console.error('Optional user lookup failed:', error.message);
+
+      console.error(
+        'Bug-report authentication failure:',
+        error.message
+      );
+
+      return json({
+        error: 'The service is temporarily unavailable. Please try again later.'
+      }, 503);
     }
+
+   if (!data?.user?.id) {
+  return json({
+    error: 'Invalid authentication token'
+  }, 401);
+}
+
+userId = data.user.id;
+  } catch (error) {
+    console.error(
+      'Bug-report authentication exception:',
+      error.message
+    );
+
+    return json({
+      error: 'The service is temporarily unavailable. Please try again later.'
+    }, 503);
   }
+}
+
 
   try {
     const { error } = await client.from('bug_reports').insert({

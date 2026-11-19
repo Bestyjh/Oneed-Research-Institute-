@@ -2,12 +2,15 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabaseClient';
 import App from './App';
+import { StrictMode } from 'react';
 
-jest.mock('./lib/supabaseClient', () => ({
+vi.mock('./lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      getSession: jest.fn(),
-      onAuthStateChange: jest.fn(),
+      getSession: vi.fn(),
+      onAuthStateChange: vi.fn(),
+      initialize: vi.fn(),
+      getUser: vi.fn(),
     },
   },
 }));
@@ -18,7 +21,15 @@ function LocationObserver() {
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
+    supabase.auth.initialize.mockResolvedValue({
+    error: null,
+  });
+
+  supabase.auth.getUser.mockResolvedValue({
+    data: { user: null },
+    error: null,
+  });
 
   supabase.auth.getSession.mockResolvedValue({
     data: { session: null },
@@ -28,7 +39,7 @@ beforeEach(() => {
   supabase.auth.onAuthStateChange.mockReturnValue({
     data: {
       subscription: {
-        unsubscribe: jest.fn(),
+        unsubscribe: vi.fn(),
       },
     },
   });
@@ -107,4 +118,22 @@ test('renders the not-found page for unknown routes', async () => {
 
   expect(screen.getByTestId('current-path'))
     .toHaveTextContent('/this-page-does-not-exist');
+});
+
+test('renders the application correctly under React Strict Mode', async () => {
+  render(
+    <StrictMode>
+      <MemoryRouter initialEntries={['/login']}>
+        <App />
+      </MemoryRouter>
+    </StrictMode>
+  );
+
+  expect(
+    await screen.findByRole('heading', { name: 'Log In' })
+  ).toBeInTheDocument();
+
+  expect(
+    screen.getByPlaceholderText('you@email.com')
+  ).toBeInTheDocument();
 });
