@@ -29,6 +29,20 @@ const validKey =
   key.length > "sb_publishable_".length;
 
 if (!validUrl || !validKey) {
+  const supabaseUrlNames = Object.keys(process.env)
+    .filter((name) =>
+      /SUPABASE.*URL|URL.*SUPABASE/i.test(name)
+    )
+    .sort();
+
+  console.error("Supabase URL environment diagnostics:", {
+    matchingNames: supabaseUrlNames,
+    frontendUrlDefined: Object.prototype.hasOwnProperty.call(
+      process.env,
+      "REACT_APP_SUPABASE_URL"
+    ),
+    backendUrlPresent: Boolean(process.env.SUPABASE_URL),
+  });
   console.error("Supabase build diagnostics:", {
     urlPresent: Boolean(url),
     urlValid: validUrl,
