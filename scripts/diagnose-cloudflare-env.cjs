@@ -2,6 +2,7 @@ const expected = [
   'REACT_APP_SUPABASE_URL',
   'SUPABASE_URL',
   'REACT_APP_SUPABASE_ANON_KEY',
+  'ONEED_BUILD_PROBE',
 ];
 
 const matchingNames = Object.keys(process.env)
