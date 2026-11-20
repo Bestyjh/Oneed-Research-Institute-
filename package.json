@@ -22,7 +22,7 @@
     "build": "vite build",
     "postbuild": "node scripts/generate-prerendered-pages.js",
     "test": "vitest run --config vitest.config.mjs",
-    "prebuild": "node scripts/validate-build-env.js",
+    "prebuild": "node scripts/diagnose-cloudflare-env.cjs && node scripts/validate-build-env.js",
     "preview": "vite preview --host 127.0.0.1",
     "test:watch": "vitest --config vitest.config.mjs"
   },
