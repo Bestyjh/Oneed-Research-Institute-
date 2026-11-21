@@ -266,19 +266,35 @@ const messages = incomingMessages;
 
     if (!response.ok) {
       console.error('OpenAI request failed:', response.status);
-      return json({ reply: fallbackReply });
+      return json({
+        reply: fallbackReply,
+        source: 'fallback',
+        fallback: true,
+      });
     }
 
     const payload = await response.json();
     const reply = extractReplyText(payload);
 
     if (!reply) {
-      return json({ reply: fallbackReply });
+      return json({
+        reply: fallbackReply,
+        source: 'fallback',
+        fallback: true,
+      });
     }
 
-    return json({ reply });
+    return json({
+      reply,
+      source: 'openai',
+      fallback: false,
+    });
   } catch (error) {
     console.error('Chat upstream request failed:', error.message);
-    return json({ reply: fallbackReply });
+    return json({
+      reply: fallbackReply,
+      source: 'fallback',
+      fallback: true,
+      });
   }
 }

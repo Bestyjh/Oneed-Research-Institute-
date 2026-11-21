@@ -120,8 +120,10 @@ describe('Cloudflare Chat API security', () => {
       );
 
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({
+          expect(await response.json()).toEqual({
         reply: 'ONEED offers professional development workshops.',
+        source: 'openai',
+        fallback: false,
       });
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -163,8 +165,10 @@ describe('Cloudflare Chat API security', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(200);
 
-      expect(await response.json()).toEqual({
+          expect(await response.json()).toEqual({
         reply: 'Oneed offers short courses, workshops and training, conferences, and professional development. Share your goal and I can guide you to the best option.',
+        source: 'fallback',
+        fallback: true,
       });
     } finally {
       fetchMock.mockRestore();
@@ -189,10 +193,12 @@ describe('Cloudflare Chat API security', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(200);
 
-      const data = await response.json();
+       const data = await response.json();
 
       expect(typeof data.reply).toBe('string');
       expect(data.reply.trim().length).toBeGreaterThan(0);
+      expect(data.source).toBe('fallback');
+      expect(data.fallback).toBe(true);
     } finally {
       fetchMock.mockRestore();
     }
@@ -219,10 +225,12 @@ describe('Cloudflare Chat API security', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(response.status).toBe(200);
 
-      const data = await response.json();
+     const data = await response.json();
 
       expect(typeof data.reply).toBe('string');
       expect(data.reply.trim().length).toBeGreaterThan(0);
+      expect(data.source).toBe('fallback');
+      expect(data.fallback).toBe(true);
     } finally {
       fetchMock.mockRestore();
     }
