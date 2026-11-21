@@ -8,7 +8,10 @@ export default mergeConfig(
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./src/setupTests.js'],
-      include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+      include: [
+        'src/**/*.{test,spec}.{js,jsx,ts,tsx}',
+        'functions/**/*.{test,spec}.{js,jsx,ts,tsx}',
+      ],
       clearMocks: true,
     },
   })

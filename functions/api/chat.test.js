@@ -95,4 +95,136 @@ describe('Cloudflare Chat API security', () => {
       error: 'Too many messages. Please try again later.',
     });
   });
+
+  it('returns a successful mocked OpenAI response', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          output_text: 'ONEED offers professional development workshops.',
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+
+    try {
+      const response = await run(
+        {
+          messages: [
+            { role: 'user', content: 'What training does ONEED offer?' },
+          ],
+        },
+        { OPENAI_API_KEY: 'test-key-not-real' }
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        reply: 'ONEED offers professional development workshops.',
+      });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.openai.com/v1/responses',
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            Authorization: 'Bearer test-key-not-real',
+          }),
+        })
+      );
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it('returns a fallback when OpenAI responds with HTTP 500', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ error: { message: 'Mock upstream failure' } }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    );
+
+    try {
+      const response = await run(
+        {
+          messages: [
+            { role: 'user', content: 'Tell me about ONEED courses' },
+          ],
+        },
+        { OPENAI_API_KEY: 'test-key-not-real' }
+      );
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(200);
+
+      expect(await response.json()).toEqual({
+        reply: 'Oneed offers short courses, workshops and training, conferences, and professional development. Share your goal and I can guide you to the best option.',
+      });
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it('returns a fallback when the OpenAI network request fails', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(
+      new TypeError('Mock network connection failure')
+    );
+
+    try {
+      const response = await run(
+        {
+          messages: [
+            { role: 'user', content: 'How can I contact ONEED?' },
+          ],
+        },
+        { OPENAI_API_KEY: 'test-key-not-real' }
+      );
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+
+      expect(typeof data.reply).toBe('string');
+      expect(data.reply.trim().length).toBeGreaterThan(0);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
+  it('returns a fallback when the OpenAI request times out', async () => {
+    const timeoutError = new Error('Mock OpenAI request timeout');
+    timeoutError.name = 'TimeoutError';
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(
+      timeoutError
+    );
+
+    try {
+      const response = await run(
+        {
+          messages: [
+            { role: 'user', content: 'Tell me about ONEED partnerships' },
+          ],
+        },
+        { OPENAI_API_KEY: 'test-key-not-real' }
+      );
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+
+      expect(typeof data.reply).toBe('string');
+      expect(data.reply.trim().length).toBeGreaterThan(0);
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
 });
