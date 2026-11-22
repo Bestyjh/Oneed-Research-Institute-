@@ -1,16 +1,13 @@
+
 import { describe, expect, it } from 'vitest';
 import { onRequestGet } from './preview-diagnostic.js';
-
-const stagingUrl = 'https://bvwxgetdaojkdjqpcmci.supabase.co';
-const productionUrl = 'https://jdqacsksryqfvfzejsbv.supabase.co';
 
 const enabledEnv = {
   ONEED_DEPLOYMENT_SCOPE: 'preview',
   ONEED_DIAGNOSTIC_ENABLED: 'true',
-  SUPABASE_URL: stagingUrl,
 };
 
-describe('Preview diagnostic endpoint security', () => {
+describe('Preview runtime diagnostic security', () => {
   it.each([
     {},
     { ONEED_DEPLOYMENT_SCOPE: 'preview' },
@@ -21,48 +18,71 @@ describe('Preview diagnostic endpoint security', () => {
     const response = onRequestGet({ env });
 
     expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ error: 'Not found' });
-  });
-
-  it('identifies the staging Supabase project', async () => {
-    const response = onRequestGet({ env: enabledEnv });
-
-    expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      diagnostic: 'supabase-target',
-      target: 'staging',
+      error: 'Not found',
     });
   });
 
-  it('identifies the production Supabase project', async () => {
-    const response = onRequestGet({
-      env: { ...enabledEnv, SUPABASE_URL: productionUrl },
-    });
-
-    expect(response.status).toBe(200);
-    expect((await response.json()).target).toBe('production');
-  });
-
-  it('returns unknown for invalid configuration', async () => {
-    const response = onRequestGet({
-      env: { ...enabledEnv, SUPABASE_URL: 'invalid-url' },
-    });
-
-    expect(response.status).toBe(200);
-    expect((await response.json()).target).toBe('unknown');
-  });
-
-  it('does not disclose Supabase credentials', async () => {
+  it('reports when the runtime branch binding is present', async () => {
     const response = onRequestGet({
       env: {
         ...enabledEnv,
-        SUPABASE_SERVICE_ROLE_KEY: 'test-secret-value',
+        CF_PAGES_BRANCH: 'security/vite-migration',
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      diagnostic: 'runtime-branch-presence',
+      branchBindingPresent: true,
+    });
+  });
+
+  it.each([
+    undefined,
+    null,
+    '',
+    123,
+  ])('reports missing or invalid branch binding: %s', async (branch) => {
+    const response = onRequestGet({
+      env: {
+        ...enabledEnv,
+        CF_PAGES_BRANCH: branch,
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      diagnostic: 'runtime-branch-presence',
+      branchBindingPresent: false,
+    });
+  });
+
+  it('does not disclose branch names or credentials', async () => {
+    const branch = 'security/vite-migration';
+    const secret = 'test-secret-value';
+    const supabaseUrl =
+      'https://bvwxgetdaojkdjqpcmci.supabase.co';
+
+    const response = onRequestGet({
+      env: {
+        ...enabledEnv,
+        CF_PAGES_BRANCH: branch,
+        SUPABASE_URL: supabaseUrl,
+        SUPABASE_SERVICE_ROLE_KEY: secret,
       },
     });
 
     const body = await response.text();
 
-    expect(body).not.toContain(stagingUrl);
-    expect(body).not.toContain('test-secret-value');
+    expect(body).not.toContain(branch);
+    expect(body).not.toContain(secret);
+    expect(body).not.toContain(supabaseUrl);
+  });
+
+  it('disables caching of diagnostic responses', () => {
+    const response = onRequestGet({ env: enabledEnv });
+
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
   });
 });
