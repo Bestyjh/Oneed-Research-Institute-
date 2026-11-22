@@ -5,10 +5,24 @@ export function onRequestGet({ env }) {
     'Cache-Control': 'no-store',
   };
 
-  if (
-    env?.ONEED_DEPLOYMENT_SCOPE !== 'preview' ||
-    env?.ONEED_DIAGNOSTIC_ENABLED !== 'true'
-  ) {
+  const scopeMatches =
+    env?.ONEED_DEPLOYMENT_SCOPE === 'preview';
+
+  const diagnosticEnabled =
+    env?.ONEED_DIAGNOSTIC_ENABLED === 'true';
+
+  const branchBindingPresent =
+    typeof env?.CF_PAGES_BRANCH === 'string' &&
+    env.CF_PAGES_BRANCH.length > 0;
+
+  // Report only boolean results. Never log secret values.
+  console.log('ONEED Preview diagnostic guard', {
+    scopeMatches,
+    diagnosticEnabled,
+    branchBindingPresent,
+  });
+
+  if (!scopeMatches || !diagnosticEnabled) {
     return new Response(
       JSON.stringify({ error: 'Not found' }),
       { status: 404, headers }
@@ -18,9 +32,7 @@ export function onRequestGet({ env }) {
   return new Response(
     JSON.stringify({
       diagnostic: 'runtime-branch-presence',
-      branchBindingPresent:
-        typeof env?.CF_PAGES_BRANCH === 'string' &&
-        env.CF_PAGES_BRANCH.length > 0,
+      branchBindingPresent,
     }),
     { status: 200, headers }
   );
