@@ -1,4 +1,3 @@
-
 import { describe, expect, it } from 'vitest';
 import { onRequestGet } from './preview-diagnostic.js';
 
@@ -23,7 +22,7 @@ describe('Preview runtime diagnostic security', () => {
     });
   });
 
-  it('reports when the runtime branch binding is present', async () => {
+  it('reports an exact match for the approved Preview branch', async () => {
     const response = onRequestGet({
       env: {
         ...enabledEnv,
@@ -33,8 +32,34 @@ describe('Preview runtime diagnostic security', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      diagnostic: 'runtime-branch-presence',
+      diagnostic: 'runtime-branch-verification',
       branchBindingPresent: true,
+      branchMatches: true,
+    });
+  });
+
+  it.each([
+    'security/shared-rate-limiting',
+    'main',
+    'feature/unrelated',
+    'Security/vite-migration',
+    ' security/vite-migration',
+    'security/vite-migration ',
+    '   ',
+    'refs/heads/security/vite-migration',
+  ])('rejects an incorrect runtime branch match: %s', async (branch) => {
+    const response = onRequestGet({
+      env: {
+        ...enabledEnv,
+        CF_PAGES_BRANCH: branch,
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      diagnostic: 'runtime-branch-verification',
+      branchBindingPresent: true,
+      branchMatches: false,
     });
   });
 
@@ -53,8 +78,9 @@ describe('Preview runtime diagnostic security', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      diagnostic: 'runtime-branch-presence',
+      diagnostic: 'runtime-branch-verification',
       branchBindingPresent: false,
+      branchMatches: false,
     });
   });
 

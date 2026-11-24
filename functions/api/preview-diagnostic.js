@@ -1,4 +1,3 @@
-
 export function onRequestGet({ env }) {
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
@@ -15,11 +14,15 @@ export function onRequestGet({ env }) {
     typeof env?.CF_PAGES_BRANCH === 'string' &&
     env.CF_PAGES_BRANCH.length > 0;
 
+  const branchMatches =
+    env?.CF_PAGES_BRANCH === 'security/vite-migration';
+
   // Report only boolean results. Never log secret values.
   console.log('ONEED Preview diagnostic guard', {
     scopeMatches,
     diagnosticEnabled,
     branchBindingPresent,
+    branchMatches,
   });
 
   if (!scopeMatches || !diagnosticEnabled) {
@@ -31,8 +34,9 @@ export function onRequestGet({ env }) {
 
   return new Response(
     JSON.stringify({
-      diagnostic: 'runtime-branch-presence',
+      diagnostic: 'runtime-branch-verification',
       branchBindingPresent,
+      branchMatches,
     }),
     { status: 200, headers }
   );
