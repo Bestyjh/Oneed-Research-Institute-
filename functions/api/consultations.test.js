@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../_lib/ratelimit.js', () => ({
   getClientIp: vi.fn(() => '127.0.0.1'),
@@ -27,6 +27,27 @@ const run = (body) =>
   });
 
 describe('Cloudflare Consultations API security', () => {
+  let fetchMock;
+  let unexpectedFetch;
+
+  beforeEach(() => {
+    unexpectedFetch = vi.fn();
+
+    fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => {
+        unexpectedFetch();
+        throw new Error('Unexpected network request blocked');
+      });
+  });
+
+  afterEach(() => {
+    try {
+      expect(unexpectedFetch).not.toHaveBeenCalled();
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
   beforeEach(() => {
     getSupabaseAdmin.mockReturnValue({
       client: null,
@@ -142,15 +163,12 @@ describe('Cloudflare Consultations API security', () => {
       error: null,
     });
 
-    const fetchMock = vi.fn().mockResolvedValue({
+    fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
     });
 
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = fetchMock;
 
-    try {
       const response = await onRequestPost({
         request: makeRequest({
           name: 'Test User',
@@ -185,9 +203,7 @@ describe('Cloudflare Consultations API security', () => {
       expect(payload.to).toEqual(['notifications@example.com']);
       expect(payload.reply_to).toBe('test@example.com');
       expect(payload.subject).toBe('New Consultation Request - Research');
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+
   });
 
 
@@ -202,9 +218,7 @@ describe('Cloudflare Consultations API security', () => {
       error: null,
     });
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    try {
       const response = await onRequestPost({
         request: makeRequest({
           name: 'Test User',
@@ -221,10 +235,8 @@ describe('Cloudflare Consultations API security', () => {
 
       expect(from).toHaveBeenCalledWith('consultation_requests');
       expect(insert).toHaveBeenCalledOnce();
-      expect(fetchSpy).not.toHaveBeenCalled();
-    } finally {
-      fetchSpy.mockRestore();
-    }
+      expect(fetchMock).not.toHaveBeenCalled();
+
   });
 
 
@@ -237,15 +249,12 @@ describe('Cloudflare Consultations API security', () => {
       error: null,
     });
 
-    const fetchMock = vi.fn().mockResolvedValue({
+    fetchMock.mockResolvedValueOnce({
       ok: false,
       status: 503,
     });
 
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = fetchMock;
 
-    try {
       const response = await onRequestPost({
         request: makeRequest({
           name: 'Test User',
@@ -266,9 +275,7 @@ describe('Cloudflare Consultations API security', () => {
       expect(from).toHaveBeenCalledWith('consultation_requests');
       expect(insert).toHaveBeenCalledOnce();
       expect(fetchMock).toHaveBeenCalledOnce();
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
+
   });
 
 });

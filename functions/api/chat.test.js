@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../_lib/ratelimit.js', () => ({
   getClientIp: vi.fn(() => '127.0.0.1'),
@@ -19,6 +19,27 @@ const run = (body, env = {}) =>
   onRequestPost({ request: makeRequest(body), env });
 
 describe('Cloudflare Chat API security', () => {
+  let fetchMock;
+  let unexpectedFetch;
+
+  beforeEach(() => {
+    unexpectedFetch = vi.fn();
+
+    fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => {
+        unexpectedFetch();
+        throw new Error('Unexpected network request blocked');
+      });
+  });
+
+  afterEach(() => {
+    try {
+      expect(unexpectedFetch).not.toHaveBeenCalled();
+    } finally {
+      fetchMock.mockRestore();
+    }
+  });
+
   beforeEach(() => {
     rateLimit.mockResolvedValue({
       allowed: true,
@@ -97,7 +118,7 @@ describe('Cloudflare Chat API security', () => {
   });
 
   it('returns a successful mocked OpenAI response', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+    fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           output_text: 'ONEED offers professional development workshops.',
@@ -109,7 +130,6 @@ describe('Cloudflare Chat API security', () => {
       )
     );
 
-    try {
       const response = await run(
         {
           messages: [
@@ -136,13 +156,11 @@ describe('Cloudflare Chat API security', () => {
           }),
         })
       );
-    } finally {
-      fetchMock.mockRestore();
-    }
+
   });
 
   it('returns a fallback when OpenAI responds with HTTP 500', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+    fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({ error: { message: 'Mock upstream failure' } }),
         {
@@ -152,7 +170,6 @@ describe('Cloudflare Chat API security', () => {
       )
     );
 
-    try {
       const response = await run(
         {
           messages: [
@@ -170,17 +187,14 @@ describe('Cloudflare Chat API security', () => {
         source: 'fallback',
         fallback: true,
       });
-    } finally {
-      fetchMock.mockRestore();
-    }
+
   });
 
   it('returns a fallback when the OpenAI network request fails', async () => {
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(
+    fetchMock.mockRejectedValueOnce(
       new TypeError('Mock network connection failure')
     );
 
-    try {
       const response = await run(
         {
           messages: [
@@ -199,20 +213,17 @@ describe('Cloudflare Chat API security', () => {
       expect(data.reply.trim().length).toBeGreaterThan(0);
       expect(data.source).toBe('fallback');
       expect(data.fallback).toBe(true);
-    } finally {
-      fetchMock.mockRestore();
-    }
+
   });
 
   it('returns a fallback when the OpenAI request times out', async () => {
     const timeoutError = new Error('Mock OpenAI request timeout');
     timeoutError.name = 'TimeoutError';
 
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(
+    fetchMock.mockRejectedValueOnce(
       timeoutError
     );
 
-    try {
       const response = await run(
         {
           messages: [
@@ -231,8 +242,6 @@ describe('Cloudflare Chat API security', () => {
       expect(data.reply.trim().length).toBeGreaterThan(0);
       expect(data.source).toBe('fallback');
       expect(data.fallback).toBe(true);
-    } finally {
-      fetchMock.mockRestore();
-    }
+
   });
 });
