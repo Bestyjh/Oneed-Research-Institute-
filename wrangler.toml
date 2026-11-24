@@ -1,3 +1,7 @@
 name = "oneed-institute-pages"
 pages_build_output_dir = "./build"
 compatibility_date = "2026-11-01"
+
+[env.preview.vars]
+ONEED_DEPLOYMENT_SCOPE = "preview"
+ONEED_DIAGNOSTIC_ENABLED = "true"
